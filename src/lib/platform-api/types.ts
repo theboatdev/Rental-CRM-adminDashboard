@@ -1,0 +1,145 @@
+import type {
+  ConfigChange,
+  ConfigIssue,
+  ConfigValidation,
+  CreateTenantInput,
+  PlatformMeta,
+  TenantConfig,
+  TenantStatus,
+} from "@/lib/contract";
+
+export interface Actor {
+  id: string;
+  name: string;
+}
+
+export interface TenantLimits {
+  maxVehicles: number;
+  maxUsers: number;
+  storageGb: number;
+}
+
+export interface TenantUsage {
+  vehicles: number;
+  members: number;
+  storageGb: number;
+}
+
+export interface Tenant {
+  id: string;
+  name: string;
+  slug: string;
+  status: TenantStatus;
+  /** Status changes the backend currently allows for this tenant. */
+  allowedTransitions: TenantStatus[];
+  template: string;
+  adminEmail: string;
+  adminName: string | null;
+  clerkOrgId: string | null;
+  dbName: string;
+  activeConfigVersion: number | null;
+  limits: TenantLimits;
+  usage: TenantUsage;
+  /** Currency of the active config, for list views. */
+  currency: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProvisioningStep {
+  key: string;
+  label: string;
+  status: "pending" | "running" | "done" | "failed";
+  error?: string;
+  finishedAt?: string;
+}
+
+export interface ProvisioningJob {
+  id: string;
+  tenantId: string;
+  status: "running" | "succeeded" | "failed";
+  steps: ProvisioningStep[];
+  startedAt: string;
+  finishedAt: string | null;
+}
+
+export interface ConfigVersion {
+  tenantId: string;
+  version: number;
+  config: TenantConfig;
+  note: string;
+  createdBy: Actor;
+  createdAt: string;
+}
+
+/** A version in the history list, with its changes from the previous version. */
+export interface ConfigVersionWithChanges extends ConfigVersion {
+  changes: ConfigChange[];
+}
+
+export type AuditAction =
+  | "tenant.created"
+  | "tenant.status_changed"
+  | "tenant.provisioning_retried"
+  | "config.published"
+  | "config.restored";
+
+export interface AuditEntry {
+  id: string;
+  at: string;
+  actor: Actor;
+  action: AuditAction;
+  tenantId: string;
+  tenantName: string;
+  summary: string;
+}
+
+export interface PlatformStats {
+  tenantsByStatus: Record<TenantStatus, number>;
+  totalMembers: number;
+  totalVehicles: number;
+  failedProvisioning: number;
+}
+
+export type PlatformApiErrorCode =
+  | "not_found"
+  | "conflict"
+  | "invalid"
+  | "unauthenticated"
+  | "forbidden"
+  | "unavailable"
+  | "internal";
+
+export class PlatformApiError extends Error {
+  constructor(
+    message: string,
+    readonly code: PlatformApiErrorCode,
+    readonly issues?: ConfigIssue[],
+    options?: ErrorOptions,
+  ) {
+    super(message, options);
+    this.name = "PlatformApiError";
+  }
+}
+
+/** The config to validate or publish: an object from the form, or the raw text of an uploaded file. */
+export type ConfigPayload = { config: unknown } | { configText: string };
+
+/** Client for the backend's /api/platform routes, authenticated as the signed-in super admin. */
+export interface PlatformApi {
+  getMeta(): Promise<PlatformMeta>;
+  getStats(): Promise<PlatformStats>;
+  listTenants(): Promise<Tenant[]>;
+  getTenant(tenantId: string): Promise<Tenant>;
+  getProvisioningJob(tenantId: string): Promise<ProvisioningJob | null>;
+  createTenant(input: CreateTenantInput): Promise<{ tenant: Tenant; job: ProvisioningJob }>;
+  retryProvisioning(tenantId: string): Promise<ProvisioningJob>;
+  setTenantStatus(tenantId: string, status: TenantStatus): Promise<Tenant>;
+  listConfigVersions(tenantId: string): Promise<ConfigVersionWithChanges[]>;
+  getActiveConfig(tenantId: string): Promise<ConfigVersion | null>;
+  validateConfig(tenantId: string, payload: ConfigPayload): Promise<ConfigValidation>;
+  /** Fails with `conflict` when `baseVersion` is no longer the active version. */
+  publishConfig(tenantId: string, input: ConfigPayload & { note: string; baseVersion: number | null }): Promise<ConfigVersion>;
+  restoreConfigVersion(tenantId: string, version: number, baseVersion: number | null): Promise<ConfigVersion>;
+  listAudit(filter?: { tenantId?: string; limit?: number }): Promise<AuditEntry[]>;
+}
