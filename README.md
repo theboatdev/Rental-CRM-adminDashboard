@@ -40,4 +40,4 @@ npm run dev                  # http://localhost:3001
 
 **Monaco is self-hosted.** `scripts/copy-monaco.mjs` runs before `dev` and `build`. It copies `monaco-editor/min/vs` into `public/monaco/` (gitignored), so the editor never loads code from a CDN.
 
-**Until Phase 2** the backend keeps tenants in memory, seeded with Shenaly and two demo tenants, and resets when it restarts. An admin email on the `fail.test` domain simulates a failed invite, so you can try **Retry provisioning**.
+**Creating a tenant is real.** The backend creates a Clerk organization, the tenant's database and config v1, and emails the admin an invitation before it responds. If a step fails, the result page and the tenant page show the error on that step, and **Retry provisioning** resumes from there. See the backend's `docs/clerk-setup.md` (step 7).
