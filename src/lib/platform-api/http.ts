@@ -66,4 +66,13 @@ export const httpPlatformApi: PlatformApi = {
     if (filter.limit) query.set("limit", String(filter.limit));
     return request("GET", `/audit${query.size ? `?${query}` : ""}`);
   },
+  listTenantMembers: (tenantId) => request("GET", `${tenantPath(tenantId)}/members`),
+  listTenantInvitations: (tenantId) => request("GET", `${tenantPath(tenantId)}/invitations`),
+  listTenantRoles: (tenantId) => request("GET", `${tenantPath(tenantId)}/roles`),
+  inviteTenantUser: (tenantId, input) => request("POST", `${tenantPath(tenantId)}/invitations`, input),
+  changeTenantMemberRole: (tenantId, memberId, roleKey) =>
+    request("PATCH", `${tenantPath(tenantId)}/members/${encodeURIComponent(memberId)}`, { roleKey }),
+  removeTenantMember: (tenantId, memberId) => request("DELETE", `${tenantPath(tenantId)}/members/${encodeURIComponent(memberId)}`),
+  revokeTenantInvitation: (tenantId, invitationId) =>
+    request("DELETE", `${tenantPath(tenantId)}/invitations/${encodeURIComponent(invitationId)}`),
 };

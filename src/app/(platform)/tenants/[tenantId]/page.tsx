@@ -71,6 +71,9 @@ async function TenantDetail({ params }: { params: Promise<{ tenantId: string }> 
               provisioningFailed={job?.status === "failed"}
             />
             <Button asChild variant="outline">
+              <Link href={`/tenants/${tenant.id}/users`}>Users</Link>
+            </Button>
+            <Button asChild variant="outline">
               <Link href={`/tenants/${tenant.id}/config/history`}>Config history</Link>
             </Button>
             <Button asChild>

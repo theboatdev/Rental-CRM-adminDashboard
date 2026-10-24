@@ -82,7 +82,42 @@ export type AuditAction =
   | "tenant.status_changed"
   | "tenant.provisioning_retried"
   | "config.published"
-  | "config.restored";
+  | "config.restored"
+  | "member.invited"
+  | "member.role_changed"
+  | "member.removed"
+  | "invitation.revoked";
+
+/** A member of a tenant (its Clerk organization and its `members` collection). */
+export interface TenantMember {
+  id: string;
+  clerkUserId: string;
+  name: string | null;
+  email: string;
+  roleKey: string;
+  status: "active" | "removed";
+  joinedAt: string;
+  removedAt: string | null;
+}
+
+/** A pending Clerk organization invitation, with the tenant role it grants on acceptance. */
+export interface TenantInvitation {
+  id: string;
+  email: string;
+  roleKey: string | null;
+  createdAt: string;
+  expiresAt: string | null;
+}
+
+/** One of a tenant's roles: the four system roles plus the tenant's custom roles. */
+export interface TenantRole {
+  key: string;
+  name: string;
+  description: string;
+  permissions: string[];
+  system: boolean;
+  memberCount: number;
+}
 
 export interface AuditEntry {
   id: string;
@@ -142,4 +177,12 @@ export interface PlatformApi {
   publishConfig(tenantId: string, input: ConfigPayload & { note: string; baseVersion: number | null }): Promise<ConfigVersion>;
   restoreConfigVersion(tenantId: string, version: number, baseVersion: number | null): Promise<ConfigVersion>;
   listAudit(filter?: { tenantId?: string; limit?: number }): Promise<AuditEntry[]>;
+  /** A tenant's users. Changes need an active tenant and follow its rules: maxUsers, at least one Owner. */
+  listTenantMembers(tenantId: string): Promise<TenantMember[]>;
+  listTenantInvitations(tenantId: string): Promise<TenantInvitation[]>;
+  listTenantRoles(tenantId: string): Promise<TenantRole[]>;
+  inviteTenantUser(tenantId: string, input: { email: string; roleKey: string }): Promise<TenantInvitation>;
+  changeTenantMemberRole(tenantId: string, memberId: string, roleKey: string): Promise<TenantMember>;
+  removeTenantMember(tenantId: string, memberId: string): Promise<TenantMember>;
+  revokeTenantInvitation(tenantId: string, invitationId: string): Promise<{ id: string; email: string; revoked: boolean }>;
 }

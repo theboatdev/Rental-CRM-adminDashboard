@@ -31,7 +31,7 @@ npm run dev                  # http://localhost:3001
 | `src/lib/platform-api/` | HTTP client for `/api/platform`; sends the user's Clerk session token |
 | `src/lib/contract.ts` | TypeScript types for the backend's responses. The backend owns the schema; keep these in step with it |
 | `src/lib/actions/` | Server Actions: create tenant, change status, retry provisioning, validate, publish or restore config |
-| `src/app/(platform)/` | Overview, tenants, create wizard, tenant detail, config editor, config history, audit log |
+| `src/app/(platform)/` | Overview, tenants, create wizard, tenant detail, tenant users, config editor, config history, audit log |
 | `src/components/config/` | Config editor: form sections, Monaco raw JSON editor, upload/download, diff and publish dialog |
 
 **Config validation happens on the backend.** The editor sends each change (debounced) and each uploaded file to `POST /api/platform/tenants/:id/config/validate`. It shows the issues and diff that come back, and only enables publishing once the latest draft has been checked. Module labels, templates and the JSON Schema for autocomplete all come from `GET /api/platform/meta`.

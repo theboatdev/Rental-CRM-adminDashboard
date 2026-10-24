@@ -61,3 +61,14 @@ export async function getAuditLog(filter?: { tenantId?: string; limit?: number }
   await requireSuperAdmin();
   return platformApi().listAudit(filter);
 }
+
+export async function getTenantUsers(tenantId: string) {
+  await requireSuperAdmin();
+  const api = platformApi();
+  const [members, invitations, roles] = await Promise.all([
+    api.listTenantMembers(tenantId),
+    api.listTenantInvitations(tenantId),
+    api.listTenantRoles(tenantId),
+  ]);
+  return { members, invitations, roles };
+}

@@ -17,6 +17,10 @@ const actionLabels: Record<AuditAction, string> = {
   "tenant.provisioning_retried": "Provisioning retried",
   "config.published": "Config published",
   "config.restored": "Config restored",
+  "member.invited": "User invited",
+  "member.role_changed": "Role changed",
+  "member.removed": "User removed",
+  "invitation.revoked": "Invitation revoked",
 };
 
 export default function AuditPage() {
