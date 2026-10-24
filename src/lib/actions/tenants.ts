@@ -41,3 +41,15 @@ export async function retryProvisioningAction(tenantId: string): Promise<ActionR
     return toActionError(error);
   }
 }
+
+/** Deletes the tenant for good. The backend refuses unless it's archived (or failed provisioning) and the slug matches. */
+export async function deleteTenantAction(tenantId: string, confirmSlug: string): Promise<ActionResult> {
+  await requireSuperAdmin();
+  try {
+    await platformApi().deleteTenant(tenantId, confirmSlug);
+    revalidatePath("/", "layout");
+    return { ok: true };
+  } catch (error) {
+    return toActionError(error);
+  }
+}

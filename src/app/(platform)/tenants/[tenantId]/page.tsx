@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { PageHeader } from "@/components/shell/page-header";
+import { DeleteTenantButton } from "@/components/tenants/delete-tenant-button";
 import { LifecycleActions } from "@/components/tenants/lifecycle-actions";
 import { ProvisioningSteps } from "@/components/tenants/provisioning-steps";
 import { StatusBadge } from "@/components/tenants/status-badge";
@@ -49,6 +50,8 @@ async function TenantDetail({ params }: { params: Promise<{ tenantId: string }> 
   const inviteStatus =
     inviteStep?.status === "done" ? "Invitation sent" : inviteStep?.status === "failed" ? "Invitation failed" : "Not sent yet";
   const config = active?.config;
+  // Same rule as the backend, which enforces it: archived, or stuck after a failed provisioning.
+  const deletable = tenant.status === "archived" || (tenant.status === "provisioning" && job?.status === "failed");
 
   return (
     <>
@@ -70,6 +73,7 @@ async function TenantDetail({ params }: { params: Promise<{ tenantId: string }> 
               allowedTransitions={tenant.allowedTransitions}
               provisioningFailed={job?.status === "failed"}
             />
+            {deletable && <DeleteTenantButton tenantId={tenant.id} tenantName={tenant.name} slug={tenant.slug} />}
             <Button asChild variant="outline">
               <Link href={`/tenants/${tenant.id}/users`}>Users</Link>
             </Button>

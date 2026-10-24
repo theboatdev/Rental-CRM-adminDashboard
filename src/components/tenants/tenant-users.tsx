@@ -118,14 +118,15 @@ export function RemoveMemberButton({ tenantId, member, disabled }: { tenantId: s
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button variant="ghost" size="sm" disabled={pending || disabled}>
-          Remove
+          Remove from tenant
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Remove {name}?</AlertDialogTitle>
+          <AlertDialogTitle>Remove {name} from this tenant?</AlertDialogTitle>
           <AlertDialogDescription>
-            They lose access to the tenant at once and leave its Clerk organization. Their name stays in the history.
+            They lose access to this tenant at once and leave its Clerk organization. Their Clerk account isn&apos;t deleted, so they
+            can be invited again, and their name stays in the history.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -140,7 +141,7 @@ export function RemoveMemberButton({ tenantId, member, disabled }: { tenantId: s
               })
             }
           >
-            Remove
+            Remove from tenant
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

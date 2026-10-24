@@ -81,6 +81,7 @@ export type AuditAction =
   | "tenant.created"
   | "tenant.status_changed"
   | "tenant.provisioning_retried"
+  | "tenant.deleted"
   | "config.published"
   | "config.restored"
   | "member.invited"
@@ -170,6 +171,11 @@ export interface PlatformApi {
   createTenant(input: CreateTenantInput): Promise<{ tenant: Tenant; job: ProvisioningJob }>;
   retryProvisioning(tenantId: string): Promise<ProvisioningJob>;
   setTenantStatus(tenantId: string, status: TenantStatus): Promise<Tenant>;
+  /**
+   * Permanently deletes a tenant: its Clerk organization, database, configs and secrets.
+   * Only archived tenants or ones whose provisioning failed; `confirmSlug` must repeat the slug.
+   */
+  deleteTenant(tenantId: string, confirmSlug: string): Promise<{ id: string; deleted: boolean }>;
   listConfigVersions(tenantId: string): Promise<ConfigVersionWithChanges[]>;
   getActiveConfig(tenantId: string): Promise<ConfigVersion | null>;
   validateConfig(tenantId: string, payload: ConfigPayload): Promise<ConfigValidation>;

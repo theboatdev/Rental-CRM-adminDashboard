@@ -15,6 +15,7 @@ const actionLabels: Record<AuditAction, string> = {
   "tenant.created": "Tenant created",
   "tenant.status_changed": "Status changed",
   "tenant.provisioning_retried": "Provisioning retried",
+  "tenant.deleted": "Tenant deleted",
   "config.published": "Config published",
   "config.restored": "Config restored",
   "member.invited": "User invited",

@@ -54,6 +54,7 @@ export const httpPlatformApi: PlatformApi = {
   createTenant: (input) => request("POST", "/tenants", input),
   retryProvisioning: (tenantId) => request("POST", `${tenantPath(tenantId)}/provisioning/retry`),
   setTenantStatus: (tenantId, status) => request("PATCH", `${tenantPath(tenantId)}/status`, { status }),
+  deleteTenant: (tenantId, confirmSlug) => request("DELETE", tenantPath(tenantId), { confirmSlug }),
   listConfigVersions: (tenantId) => request("GET", `${tenantPath(tenantId)}/config/versions`),
   getActiveConfig: (tenantId) => request("GET", `${tenantPath(tenantId)}/config`),
   validateConfig: (tenantId, payload) => request("POST", `${tenantPath(tenantId)}/config/validate`, payload),
