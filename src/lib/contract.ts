@@ -34,6 +34,38 @@ export interface DocumentType extends ListItem {
   requiredFor: ResidentType[];
 }
 
+export type FieldSection = "vehicles" | "renters" | "rentals" | "payments" | "costs";
+export type CustomFieldType = "text" | "longText" | "number" | "date" | "boolean" | "select";
+
+interface CustomFieldBase {
+  /** camelCase; records store values under it. */
+  key: string;
+  label: string;
+  /** Needed when a record is created; a required yes/no field must be ticked. */
+  required: boolean;
+  /** Inactive fields are hidden; records keep their values. */
+  active: boolean;
+  showInList: boolean;
+  helpText: string;
+}
+
+/** A built-in field's settings. Core fields are always on, required and in lists. */
+export interface BuiltInFieldSettings {
+  label: string;
+  helpText: string;
+  active: boolean;
+  required: boolean;
+  showInList: boolean;
+}
+
+export type CustomField = CustomFieldBase &
+  (
+    | { type: "text" | "longText"; maxLength: number }
+    | { type: "number"; min: number | null; max: number | null }
+    | { type: "date" | "boolean" }
+    | { type: "select"; options: ListItem[] }
+  );
+
 export interface TenantConfig {
   schemaVersion: number;
   branding: {
@@ -78,7 +110,22 @@ export interface TenantConfig {
     touristPermitDocumentKeys: string[];
     codePrefixes: { rental: string; booking: string; receipt: string; advance: string; renter: string };
   };
+  fields: Record<FieldSection, { builtIn: Record<string, BuiltInFieldSettings>; custom: CustomField[] }>;
   limits: { maxVehicles: number; maxUsers: number; storageGb: number };
+}
+
+/** A built-in field as the backend defines it (backend/src/platform/config/fields.js). */
+export interface BuiltInFieldMeta {
+  key: string;
+  /** The default label. */
+  label: string;
+  type: "text" | "longText" | "number" | "money" | "distance" | "date" | "select" | "contact" | "documents" | "reference";
+  core?: boolean;
+  required?: boolean;
+  showInList?: boolean;
+  secondaryCurrencyOnly?: boolean;
+  /** What happens when the field is off. */
+  note?: string;
 }
 
 export interface ModuleMeta {
@@ -117,6 +164,7 @@ export interface PlatformMeta {
   configJsonSchema: Record<string, unknown>;
   modules: ModuleMeta[];
   residentTypes: ResidentType[];
+  builtInFields: Record<FieldSection, BuiltInFieldMeta[]>;
   templates: ConfigTemplate[];
   tenantStatuses: TenantStatus[];
   tenantStatusTransitions: Record<TenantStatus, TenantStatus[]>;
@@ -146,7 +194,15 @@ export interface ConfigValidation {
   config?: TenantConfig;
   changes: ConfigChange[];
   removedListKeys: Array<{ list: string; key: string }>;
+  /** Custom field changes that affect values records already hold. */
+  customFieldChanges: CustomFieldChange[];
 }
+
+export type CustomFieldChange = { section: FieldSection; key: string } & (
+  | { kind: "removed" }
+  | { kind: "typeChanged"; before: CustomFieldType; after: CustomFieldType }
+  | { kind: "optionRemoved"; option: string }
+);
 
 export interface CreateTenantInput {
   name: string;

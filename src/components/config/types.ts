@@ -10,6 +10,8 @@ export interface SectionProps {
   update: (mutate: (draft: TenantConfig) => void) => void;
   /** First validation message at an exact path such as `branding.primaryColor`. */
   issue: (path: string) => string | undefined;
+  /** Number of validation issues at or under a path such as `fields.vehicles`. */
+  issueCount: (path: string) => number;
 }
 
 export const toNullable = (value: string) => (value.trim() === "" ? null : value);

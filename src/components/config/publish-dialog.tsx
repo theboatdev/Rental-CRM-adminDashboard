@@ -1,6 +1,6 @@
 "use client";
 
-import type { ConfigChange } from "@/lib/contract";
+import type { ConfigChange, CustomFieldChange } from "@/lib/contract";
 import { useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,17 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ChangeList } from "./change-list";
 
+function describeCustomFieldChange(change: CustomFieldChange) {
+  switch (change.kind) {
+    case "removed":
+      return "is removed: records keep their values, but nobody can see or edit them.";
+    case "typeChanged":
+      return `changes from ${change.before} to ${change.after}: values already entered may no longer fit.`;
+    case "optionRemoved":
+      return `loses the option ${change.option}: records that picked it show the raw key.`;
+  }
+}
+
 export function PublishDialog({
   open,
   onOpenChange,
@@ -23,6 +34,7 @@ export function PublishDialog({
   nextVersion,
   changes,
   removedKeys,
+  customFieldChanges,
   pending,
   onPublish,
 }: {
@@ -32,6 +44,7 @@ export function PublishDialog({
   nextVersion: number;
   changes: ConfigChange[];
   removedKeys: Array<{ list: string; key: string }>;
+  customFieldChanges: CustomFieldChange[];
   pending: boolean;
   onPublish: (note: string) => void;
 }) {
@@ -55,6 +68,25 @@ export function PublishDialog({
             <AlertDescription>
               {removedKeys.map(({ list, key }) => `${list}.${key}`).join(", ")}. Existing records keep the old key and lose
               their label. Deactivating the item is usually safer.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {customFieldChanges.length > 0 && (
+          <Alert variant="destructive">
+            <AlertTitle>Changing custom fields that records may use</AlertTitle>
+            <AlertDescription>
+              <ul className="mt-1 space-y-0.5">
+                {customFieldChanges.map((change) => (
+                  <li key={`${change.section}.${change.key}:${change.kind}:${"option" in change ? change.option : ""}`}>
+                    <span className="font-mono">
+                      {change.section}.{change.key}
+                    </span>{" "}
+                    {describeCustomFieldChange(change)}
+                  </li>
+                ))}
+              </ul>
+              Deactivating a field or option hides it without touching existing values.
             </AlertDescription>
           </Alert>
         )}

@@ -17,6 +17,7 @@ import type { ConfigValidation, PlatformMeta, TenantConfig } from "@/lib/contrac
 import type { ConfigPayload, TenantUsage } from "@/lib/platform-api/types";
 import { PublishDialog } from "./publish-dialog";
 import { BrandingSection } from "./sections/branding-section";
+import { FieldsSection } from "./sections/fields-section";
 import { LimitsSection } from "./sections/limits-section";
 import { ListsSection } from "./sections/lists-section";
 import { LocaleSection } from "./sections/locale-section";
@@ -37,6 +38,7 @@ const TABS = [
   { value: "navigation", label: "Navigation" },
   { value: "lists", label: "Lists" },
   { value: "rules", label: "Rules" },
+  { value: "fields", label: "Fields" },
   { value: "limits", label: "Limits" },
   { value: "json", label: "Raw JSON" },
 ] as const;
@@ -112,6 +114,7 @@ export function ConfigEditor({ tenantId, tenantName, tenantSlug, version, active
     config: activeConfig,
     changes: [],
     removedListKeys: [],
+    customFieldChanges: [],
   });
 
   const issues = result.issues;
@@ -121,6 +124,10 @@ export function ConfigEditor({ tenantId, tenantName, tenantSlug, version, active
     for (const i of issues) if (!map.has(i.path)) map.set(i.path, i.message);
     return (path: string) => map.get(path);
   }, [issues]);
+  const issueCount = useCallback(
+    (path: string) => issues.filter((i) => i.path === path || i.path.startsWith(`${path}.`) || i.path.startsWith(`${path}[`)).length,
+    [issues],
+  );
   const issueCounts = useMemo(() => {
     const counts: Partial<Record<Tab, number>> = {};
     for (const i of issues) counts[tabForPath(i.path)] = (counts[tabForPath(i.path)] ?? 0) + 1;
@@ -210,7 +217,7 @@ export function ConfigEditor({ tenantId, tenantName, tenantSlug, version, active
       toast.success(`Published v${res.data.version}`);
     });
 
-  const sectionProps: SectionProps = { config: draft, baseline: activeConfig, update, issue: issueAt, meta };
+  const sectionProps: SectionProps = { config: draft, baseline: activeConfig, update, issue: issueAt, issueCount, meta };
   const canPublish = !pending && !error && result.valid && changes.length > 0;
 
   return (
@@ -319,6 +326,9 @@ export function ConfigEditor({ tenantId, tenantName, tenantSlug, version, active
           <TabsContent value="rules">
             <RulesSection {...sectionProps} />
           </TabsContent>
+          <TabsContent value="fields">
+            <FieldsSection {...sectionProps} />
+          </TabsContent>
           <TabsContent value="limits">
             <LimitsSection {...sectionProps} usage={usage} />
           </TabsContent>
@@ -357,6 +367,7 @@ export function ConfigEditor({ tenantId, tenantName, tenantSlug, version, active
         nextVersion={version + 1}
         changes={changes}
         removedKeys={result.removedListKeys}
+        customFieldChanges={result.customFieldChanges}
         pending={publishing}
         onPublish={publish}
       />

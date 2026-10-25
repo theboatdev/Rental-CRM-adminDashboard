@@ -22,6 +22,14 @@ npm run dev                  # http://localhost:3001
 
 `npm run lint`, `npm run typecheck`, `npm run build`.
 
+## Netlify
+
+Use `npm run build` as the build command and `.next` as the publish directory. If deploying from a parent repository, set the base directory to `adminDashboard`.
+
+Set the variables from `.env.example` in Netlify's **Project configuration → Environment variables**, using the deployed backend's platform API URL for `PLATFORM_API_URL`. Create `NEXT_PUBLIC_CLERK_SIGN_IN_URL` and `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` without **Contains secret values**; these are public browser configuration. Keep `CLERK_SECRET_KEY` marked as secret.
+
+`netlify.toml` excludes only those two public Clerk variables from secret scanning, including when they were previously marked as secrets in Netlify. All other secret scanning remains enabled. Commit the configuration and trigger a new deploy to apply it.
+
 ## How it's put together
 
 | Path | Purpose |
