@@ -119,7 +119,7 @@ export interface BuiltInFieldMeta {
   key: string;
   /** The default label. */
   label: string;
-  type: "text" | "longText" | "number" | "money" | "distance" | "date" | "select" | "contact" | "documents" | "reference";
+  type: "text" | "longText" | "number" | "money" | "distance" | "date" | "select" | "contact" | "documents" | "reference" | "photo";
   core?: boolean;
   required?: boolean;
   showInList?: boolean;

@@ -41,6 +41,7 @@ const BUILT_IN_TYPE_LABELS: Record<BuiltInFieldMeta["type"], string> = {
   contact: "Contact",
   documents: "Documents",
   reference: "Record",
+  photo: "Photo",
 };
 
 const MAX_FIELDS = 20;
