@@ -1,12 +1,75 @@
 "use client";
 
+import { Loader2, Upload } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { signLogoUploadAction } from "@/lib/actions/config";
 import { Field, TextField } from "../field";
 import { toNullable, type SectionProps } from "../types";
 
-export function BrandingSection({ config, update, issue }: SectionProps) {
+/**
+ * Uploads a logo straight to Cloudinary: the backend signs the upload, the
+ * browser posts the file, and the public URL goes into the draft. It's live
+ * once the config is published.
+ */
+function LogoUpload({ tenantId, onUploaded }: { tenantId: string; onUploaded: (url: string) => void }) {
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const upload = async (file: File | undefined) => {
+    if (!file) return;
+    setPending(true);
+    setError(null);
+    try {
+      const signed = await signLogoUploadAction(tenantId);
+      if (!signed.ok) throw new Error(signed.error);
+      const form = new FormData();
+      for (const [key, value] of Object.entries(signed.data.fields)) form.append(key, String(value));
+      form.append("file", file);
+      const res = await fetch(signed.data.uploadUrl, { method: "POST", body: form });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error?.message ?? `The upload failed (${res.status})`);
+      onUploaded(data.secure_url);
+      toast.success("Logo uploaded", { description: "Publish the config to use it." });
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "The upload failed");
+    } finally {
+      setPending(false);
+    }
+  };
+
+  return (
+    <div className="space-y-1">
+      <Button asChild variant="outline" size="sm" className={pending ? "pointer-events-none opacity-60" : "cursor-pointer"}>
+        <label>
+          {pending ? <Loader2 className="animate-spin" /> : <Upload />}
+          {pending ? "Uploading…" : "Upload logo"}
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="sr-only"
+            onChange={(e) => {
+              void upload(e.target.files?.[0]);
+              e.target.value = "";
+            }}
+          />
+        </label>
+      </Button>
+      {error && (
+        <p role="alert" className="text-xs text-destructive">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+export function BrandingSection({ tenantId, config, update, issue }: SectionProps) {
   const b = config.branding;
   const validColor = /^#[0-9A-Fa-f]{6}$/.test(b.primaryColor);
+  const validLogo = typeof b.logoUrl === "string" && b.logoUrl.startsWith("https://");
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_260px]">
@@ -34,16 +97,19 @@ export function BrandingSection({ config, update, issue }: SectionProps) {
           onChange={(v) => update((d) => { d.branding.tagline = v; })}
           error={issue("branding.tagline")}
         />
-        <TextField
-          id="branding-logoUrl"
-          label="Logo URL"
-          type="url"
-          placeholder="https://…"
-          hint="Upload to storage comes in Phase 5; paste an https URL for now."
-          value={b.logoUrl}
-          onChange={(v) => update((d) => { d.branding.logoUrl = toNullable(v); })}
-          error={issue("branding.logoUrl")}
-        />
+        <div className="space-y-2">
+          <TextField
+            id="branding-logoUrl"
+            label="Logo URL"
+            type="url"
+            placeholder="https://…"
+            hint="Upload a PNG, JPG or WebP (stored at most 512 px), or paste an https URL. The booking page shows it too."
+            value={b.logoUrl}
+            onChange={(v) => update((d) => { d.branding.logoUrl = toNullable(v); })}
+            error={issue("branding.logoUrl")}
+          />
+          <LogoUpload tenantId={tenantId} onUploaded={(url) => update((d) => { d.branding.logoUrl = url; })} />
+        </div>
         <Field label="Primary colour" htmlFor="branding-primaryColor" error={issue("branding.primaryColor")}>
           <div className="flex gap-2">
             <input
@@ -95,12 +161,18 @@ export function BrandingSection({ config, update, issue }: SectionProps) {
         <div className="overflow-hidden rounded-lg border">
           <div className="h-1.5" style={{ background: validColor ? b.primaryColor : undefined }} />
           <div className="flex items-center gap-3 p-4">
-            <span
-              className="flex size-10 shrink-0 items-center justify-center rounded-md text-lg font-black text-white"
-              style={{ background: validColor ? b.primaryColor : "var(--muted-foreground)" }}
-            >
-              {b.shortName.trim().charAt(0).toUpperCase() || "?"}
-            </span>
+            {validLogo ? (
+              // A tenant-supplied URL, which next/image can't optimize without listing its host.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={b.logoUrl!} alt="" className="size-10 shrink-0 object-contain" />
+            ) : (
+              <span
+                className="flex size-10 shrink-0 items-center justify-center rounded-md text-lg font-black text-white"
+                style={{ background: validColor ? b.primaryColor : "var(--muted-foreground)" }}
+              >
+                {b.shortName.trim().charAt(0).toUpperCase() || "?"}
+              </span>
+            )}
             <div className="min-w-0">
               <p className="truncate font-semibold">{b.displayName || "Display name"}</p>
               <p className="truncate text-xs text-muted-foreground">{b.tagline || "Tagline"}</p>

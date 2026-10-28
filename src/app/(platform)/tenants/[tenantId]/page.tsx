@@ -7,13 +7,14 @@ import { LifecycleActions } from "@/components/tenants/lifecycle-actions";
 import { ProvisioningSteps } from "@/components/tenants/provisioning-steps";
 import { StatusBadge } from "@/components/tenants/status-badge";
 import { UsageBar } from "@/components/tenants/usage-bar";
+import { WhatsAppConnection } from "@/components/tenants/whatsapp-connection";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { siteConfig } from "@/config/site";
-import { getActiveConfig, getAuditLog, getPlatformMeta, getProvisioningJob, getTenantOrNotFound } from "@/lib/dal";
+import { getActiveConfig, getAuditLog, getPlatformMeta, getProvisioningJob, getTenantOrNotFound, getWhatsAppConnection } from "@/lib/dal";
 import { formatDateTime } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Tenant" };
@@ -38,11 +39,12 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 async function TenantDetail({ params }: { params: Promise<{ tenantId: string }> }) {
   const { tenantId } = await params;
   const tenant = await getTenantOrNotFound(tenantId);
-  const [job, active, activity, meta] = await Promise.all([
+  const [job, active, activity, meta, whatsapp] = await Promise.all([
     getProvisioningJob(tenantId),
     getActiveConfig(tenantId),
     getAuditLog({ tenantId, limit: 8 }),
     getPlatformMeta(),
+    getWhatsAppConnection(tenantId),
   ]);
 
   const failedStep = job?.steps.find((step) => step.status === "failed");
@@ -186,6 +188,20 @@ async function TenantDetail({ params }: { params: Promise<{ tenantId: string }> 
               <ProvisioningSteps steps={job.steps} />
             </CardContent>
           )}
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>WhatsApp digest</CardTitle>
+            <CardDescription>
+              {config?.modules.whatsappDigest.enabled
+                ? `Sent "${config.modules.whatsappDigest.cron}" (${config.locale.timezone}) to ${config.modules.whatsappDigest.recipients.length} recipient(s) from the tenant's own WhatsApp Business number`
+                : "The digest module is off in this tenant's config"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <WhatsAppConnection key={JSON.stringify(whatsapp)} tenantId={tenant.id} connection={whatsapp} />
+          </CardContent>
         </Card>
 
         <Card className="lg:col-span-3">

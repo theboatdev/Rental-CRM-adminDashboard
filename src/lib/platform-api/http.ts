@@ -15,6 +15,7 @@ const CODE_FOR_STATUS: Record<number, PlatformApiErrorCode> = {
   404: "not_found",
   409: "conflict",
   422: "invalid",
+  502: "unavailable",
   503: "unavailable",
 };
 
@@ -76,4 +77,8 @@ export const httpPlatformApi: PlatformApi = {
   removeTenantMember: (tenantId, memberId) => request("DELETE", `${tenantPath(tenantId)}/members/${encodeURIComponent(memberId)}`),
   revokeTenantInvitation: (tenantId, invitationId) =>
     request("DELETE", `${tenantPath(tenantId)}/invitations/${encodeURIComponent(invitationId)}`),
+  signLogoUpload: (tenantId) => request("POST", `${tenantPath(tenantId)}/uploads/logo`),
+  getWhatsAppConnection: (tenantId) => request("GET", `${tenantPath(tenantId)}/integrations/whatsapp`),
+  setWhatsAppConnection: (tenantId, input) => request("PUT", `${tenantPath(tenantId)}/integrations/whatsapp`, input),
+  removeWhatsAppConnection: (tenantId) => request("DELETE", `${tenantPath(tenantId)}/integrations/whatsapp`),
 };

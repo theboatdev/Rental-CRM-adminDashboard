@@ -1,6 +1,7 @@
 import type { PlatformMeta, TenantConfig } from "@/lib/contract";
 
 export interface SectionProps {
+  tenantId: string;
   config: TenantConfig;
   /** Module catalog and other config metadata from the backend. */
   meta: PlatformMeta;

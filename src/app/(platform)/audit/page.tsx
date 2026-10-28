@@ -22,6 +22,8 @@ const actionLabels: Record<AuditAction, string> = {
   "member.role_changed": "Role changed",
   "member.removed": "User removed",
   "invitation.revoked": "Invitation revoked",
+  "integration.whatsapp_updated": "WhatsApp connected",
+  "integration.whatsapp_removed": "WhatsApp disconnected",
 };
 
 export default function AuditPage() {

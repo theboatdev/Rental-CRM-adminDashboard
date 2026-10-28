@@ -3,7 +3,8 @@
 Super admin console for the platform. From here you:
 
 - provision tenants (rental companies);
-- edit or upload each tenant's JSON config;
+- edit or upload each tenant's JSON config, including its logo;
+- connect each tenant's WhatsApp Business number for its digest;
 - suspend or archive tenants.
 
 Only Clerk users with `publicMetadata.platformRole = "super_admin"` can use it.
@@ -38,7 +39,7 @@ Set the variables from `.env.example` in Netlify's **Project configuration → E
 | `src/lib/dal.ts` | Data access layer. Every read and Server Action calls `requireSuperAdmin()` before calling the backend, which checks the session again |
 | `src/lib/platform-api/` | HTTP client for `/api/platform`; sends the user's Clerk session token |
 | `src/lib/contract.ts` | TypeScript types for the backend's responses. The backend owns the schema; keep these in step with it |
-| `src/lib/actions/` | Server Actions: create tenant, change status, retry provisioning, validate, publish or restore config |
+| `src/lib/actions/` | Server Actions: create tenant, change status, retry provisioning, validate, publish or restore config, sign a logo upload, set or remove the WhatsApp connection |
 | `src/app/(platform)/` | Overview, tenants, create wizard, tenant detail, tenant users, config editor, config history, audit log |
 | `src/components/config/` | Config editor: form sections, Monaco raw JSON editor, upload/download, diff and publish dialog |
 
@@ -47,5 +48,9 @@ Set the variables from `.env.example` in Netlify's **Project configuration → E
 **Cache Components.** This Next version prerenders a static shell and streams request-time data in. Anything that reads the session or the URL (`auth()`, `params`, `usePathname()`) has to sit inside a `<Suspense>` boundary; the build fails otherwise.
 
 **Monaco is self-hosted.** `scripts/copy-monaco.mjs` runs before `dev` and `build`. It copies `monaco-editor/min/vs` into `public/monaco/` (gitignored), so the editor never loads code from a CDN.
+
+**Logos go straight to Cloudinary.** The branding section's **Upload logo** asks the backend to sign the upload (a Server Action), posts the file to Cloudinary from the browser, and puts the public URL in the draft. It's live once the config is published.
+
+**WhatsApp connection.** The tenant page's **WhatsApp digest** card stores the tenant's phone number ID, access token and optional message template on the backend, encrypted. The token is never shown again, only its last 4 characters. Without a template, WhatsApp only delivers the digest to recipients who wrote to the number in the last 24 hours. The template's body takes `{{1}}` (the company name) and `{{2}}` (the digest on one line).
 
 **Creating a tenant is real.** The backend creates a Clerk organization, the tenant's database and config v1, and emails the admin an invitation before it responds. If a step fails, the result page and the tenant page show the error on that step, and **Retry provisioning** resumes from there. See the backend's `docs/clerk-setup.md` (step 7).

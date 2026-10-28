@@ -87,7 +87,44 @@ export type AuditAction =
   | "member.invited"
   | "member.role_changed"
   | "member.removed"
-  | "invitation.revoked";
+  | "invitation.revoked"
+  | "integration.whatsapp_updated"
+  | "integration.whatsapp_removed";
+
+/** POST /tenants/:id/uploads/logo: a signed upload, posted to Cloudinary with the file. */
+export interface UploadSignature {
+  kind: "logo";
+  publicId: string;
+  uploadUrl: string;
+  fields: Record<string, string | number>;
+}
+
+/**
+ * A tenant's WhatsApp Cloud API connection, which sends its digest. The
+ * access token never comes back: `tokenEnding` is its last 4 characters.
+ * `available` is false while the backend has no TENANT_SECRETS_KEY.
+ */
+export type WhatsAppConnection =
+  | { available: boolean; connected: false }
+  | {
+      available: boolean;
+      connected: true;
+      phoneNumberId: string;
+      templateName: string | null;
+      templateLanguage: string;
+      mode: "text" | "template";
+      tokenEnding: string;
+      updatedAt: string | null;
+      updatedBy: Actor | null;
+    };
+
+export interface WhatsAppConnectionInput {
+  phoneNumberId: string;
+  /** Left out to keep the current token. */
+  accessToken?: string;
+  templateName: string | null;
+  templateLanguage: string;
+}
 
 /** A member of a tenant (its Clerk organization and its `members` collection). */
 export interface TenantMember {
@@ -172,7 +209,7 @@ export interface PlatformApi {
   retryProvisioning(tenantId: string): Promise<ProvisioningJob>;
   setTenantStatus(tenantId: string, status: TenantStatus): Promise<Tenant>;
   /**
-   * Permanently deletes a tenant: its Clerk organization, database, configs and secrets.
+   * Permanently deletes a tenant: its Clerk organization, files, database, configs and secrets.
    * Only archived tenants or ones whose provisioning failed; `confirmSlug` must repeat the slug.
    */
   deleteTenant(tenantId: string, confirmSlug: string): Promise<{ id: string; deleted: boolean }>;
@@ -191,4 +228,9 @@ export interface PlatformApi {
   changeTenantMemberRole(tenantId: string, memberId: string, roleKey: string): Promise<TenantMember>;
   removeTenantMember(tenantId: string, memberId: string): Promise<TenantMember>;
   revokeTenantInvitation(tenantId: string, invitationId: string): Promise<{ id: string; email: string; revoked: boolean }>;
+  /** Signs a browser upload of the tenant's logo, a public image whose `secure_url` goes into `branding.logoUrl`. */
+  signLogoUpload(tenantId: string): Promise<UploadSignature>;
+  getWhatsAppConnection(tenantId: string): Promise<WhatsAppConnection>;
+  setWhatsAppConnection(tenantId: string, input: WhatsAppConnectionInput): Promise<WhatsAppConnection>;
+  removeWhatsAppConnection(tenantId: string): Promise<WhatsAppConnection>;
 }

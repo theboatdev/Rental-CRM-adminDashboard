@@ -3,8 +3,18 @@
 import { revalidatePath } from "next/cache";
 import type { ConfigValidation } from "@/lib/contract";
 import { requireSuperAdmin } from "@/lib/dal";
-import { platformApi, type ConfigPayload } from "@/lib/platform-api";
+import { platformApi, type ConfigPayload, type UploadSignature } from "@/lib/platform-api";
 import { toActionError, type ActionResult } from "./result";
+
+/** Signs a browser upload of the tenant's logo; the browser posts the file to Cloudinary itself. */
+export async function signLogoUploadAction(tenantId: string): Promise<ActionResult<UploadSignature>> {
+  await requireSuperAdmin();
+  try {
+    return { ok: true, data: await platformApi().signLogoUpload(tenantId) };
+  } catch (error) {
+    return toActionError(error);
+  }
+}
 
 /** Asks the backend to validate a draft or an uploaded file and diff it against the active version. */
 export async function validateConfigAction(input: {

@@ -217,7 +217,7 @@ export function ConfigEditor({ tenantId, tenantName, tenantSlug, version, active
       toast.success(`Published v${res.data.version}`);
     });
 
-  const sectionProps: SectionProps = { config: draft, baseline: activeConfig, update, issue: issueAt, issueCount, meta };
+  const sectionProps: SectionProps = { tenantId, config: draft, baseline: activeConfig, update, issue: issueAt, issueCount, meta };
   const canPublish = !pending && !error && result.valid && changes.length > 0;
 
   return (

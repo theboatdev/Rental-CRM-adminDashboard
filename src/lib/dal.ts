@@ -62,6 +62,11 @@ export async function getAuditLog(filter?: { tenantId?: string; limit?: number }
   return platformApi().listAudit(filter);
 }
 
+export async function getWhatsAppConnection(tenantId: string) {
+  await requireSuperAdmin();
+  return platformApi().getWhatsAppConnection(tenantId);
+}
+
 export async function getTenantUsers(tenantId: string) {
   await requireSuperAdmin();
   const api = platformApi();

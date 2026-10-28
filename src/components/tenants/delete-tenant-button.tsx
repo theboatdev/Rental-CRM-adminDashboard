@@ -47,6 +47,7 @@ export function DeleteTenantButton({ tenantId, tenantName, slug }: { tenantId: s
               <p>This can&apos;t be undone. It deletes:</p>
               <ul className="list-inside list-disc">
                 <li>the tenant&apos;s Clerk organization, with its memberships and pending invitations;</li>
+                <li>its files: document scans, inspection photos, bills and logo;</li>
                 <li>its database: vehicles, renters, rentals, payments, costs, members and roles;</li>
                 <li>its configs, provisioning job and secrets.</li>
               </ul>
