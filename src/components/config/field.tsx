@@ -124,12 +124,14 @@ export function SwitchField({
   description,
   checked,
   onCheckedChange,
+  disabled,
 }: {
   id: string;
   label: ReactNode;
   description?: ReactNode;
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
+  disabled?: boolean;
 }) {
   return (
     <div className="flex items-start justify-between gap-4">
@@ -137,7 +139,7 @@ export function SwitchField({
         <Label htmlFor={id}>{label}</Label>
         {description && <p className="text-xs text-muted-foreground">{description}</p>}
       </div>
-      <Switch id={id} checked={checked} onCheckedChange={onCheckedChange} />
+      <Switch id={id} checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} />
     </div>
   );
 }

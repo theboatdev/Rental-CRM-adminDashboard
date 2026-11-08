@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { ConfigValidation } from "@/lib/contract";
 import { requireSuperAdmin } from "@/lib/dal";
-import { platformApi, type ConfigPayload, type UploadSignature } from "@/lib/platform-api";
+import { platformApi, type ConfigPayload, type PdfFile, type UploadSignature } from "@/lib/platform-api";
 import { toActionError, type ActionResult } from "./result";
 
 /** Signs a browser upload of the tenant's logo; the browser posts the file to Cloudinary itself. */
@@ -11,6 +11,16 @@ export async function signLogoUploadAction(tenantId: string): Promise<ActionResu
   await requireSuperAdmin();
   try {
     return { ok: true, data: await platformApi().signLogoUpload(tenantId) };
+  } catch (error) {
+    return toActionError(error);
+  }
+}
+
+/** The return receipt of a sample rental under the draft config, for the Documents tab's preview. */
+export async function previewReturnReceiptAction(payload: ConfigPayload): Promise<ActionResult<PdfFile>> {
+  await requireSuperAdmin();
+  try {
+    return { ok: true, data: await platformApi().previewReturnReceipt(payload) };
   } catch (error) {
     return toActionError(error);
   }

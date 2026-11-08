@@ -198,6 +198,12 @@ export class PlatformApiError extends Error {
 /** The config to validate or publish: an object from the form, or the raw text of an uploaded file. */
 export type ConfigPayload = { config: unknown } | { configText: string };
 
+/** A PDF the backend made, base64-encoded so a server action can hand it to the browser. */
+export interface PdfFile {
+  filename: string;
+  base64: string;
+}
+
 /** Client for the backend's /api/platform routes, authenticated as the signed-in super admin. */
 export interface PlatformApi {
   getMeta(): Promise<PlatformMeta>;
@@ -216,6 +222,8 @@ export interface PlatformApi {
   listConfigVersions(tenantId: string): Promise<ConfigVersionWithChanges[]>;
   getActiveConfig(tenantId: string): Promise<ConfigVersion | null>;
   validateConfig(tenantId: string, payload: ConfigPayload): Promise<ConfigValidation>;
+  /** The return receipt of a sample rental under a draft config. Fails with `invalid` and the issues if the config doesn't validate. */
+  previewReturnReceipt(payload: ConfigPayload): Promise<PdfFile>;
   /** Fails with `conflict` when `baseVersion` is no longer the active version. */
   publishConfig(tenantId: string, input: ConfigPayload & { note: string; baseVersion: number | null }): Promise<ConfigVersion>;
   restoreConfigVersion(tenantId: string, version: number, baseVersion: number | null): Promise<ConfigVersion>;

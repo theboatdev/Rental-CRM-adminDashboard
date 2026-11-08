@@ -35,7 +35,9 @@ export interface DocumentType extends ListItem {
 }
 
 export type FieldSection = "vehicles" | "renters" | "rentals" | "payments" | "costs";
-export type CustomFieldType = "text" | "longText" | "number" | "date" | "boolean" | "select";
+export type CustomFieldType = "text" | "longText" | "number" | "date" | "boolean" | "select" | "file";
+/** What a file field takes: `images` (stored as JPEGs at most 2000 px), or `documents` (images or PDF). */
+export type FileFieldAccept = "images" | "documents";
 
 interface CustomFieldBase {
   /** camelCase; records store values under it. */
@@ -64,6 +66,7 @@ export type CustomField = CustomFieldBase &
     | { type: "number"; min: number | null; max: number | null }
     | { type: "date" | "boolean" }
     | { type: "select"; options: ListItem[] }
+    | { type: "file"; accept: FileFieldAccept }
   );
 
 export interface TenantConfig {
@@ -111,7 +114,26 @@ export interface TenantConfig {
     codePrefixes: { rental: string; booking: string; receipt: string; advance: string; renter: string };
   };
   fields: Record<FieldSection, { builtIn: Record<string, BuiltInFieldSettings>; custom: CustomField[] }>;
+  /** The PDFs the tenant app issues. */
+  documents: { returnReceipt: ReturnReceiptSettings };
   limits: { maxVehicles: number; maxUsers: number; storageGb: number };
+}
+
+/** `documents.returnReceipt`: the PDF bill a completed rental downloads as, confirming the return. */
+export interface ReturnReceiptSettings {
+  enabled: boolean;
+  title: string;
+  /** Lines under the business name: address, registration or tax number. */
+  issuerDetails: string[];
+  /** May use the placeholders in `PlatformMeta.documentPlaceholders.returnReceipt`. */
+  returnStatement: string;
+  showInspections: boolean;
+  showInspectionPhotos: boolean;
+  showPayments: boolean;
+  showCustomFields: boolean;
+  showSignatures: boolean;
+  footer: string;
+  paperSize: "A4" | "LETTER";
 }
 
 /** A built-in field as the backend defines it (backend/src/platform/config/fields.js). */
@@ -171,6 +193,8 @@ export interface PlatformMeta {
   provisioningSteps: Array<{ key: string; label: string }>;
   permissions: PermissionMeta[];
   systemRoles: SystemRole[];
+  /** The `{placeholders}` each document's texts can use. */
+  documentPlaceholders: { returnReceipt: Array<{ key: string; description: string }> };
 }
 
 export interface ConfigIssue {

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import type { BuiltInFieldMeta, CustomField, CustomFieldType, FieldSection, TenantConfig } from "@/lib/contract";
+import type { BuiltInFieldMeta, CustomField, CustomFieldType, FieldSection, FileFieldAccept, TenantConfig } from "@/lib/contract";
 import { cn } from "@/lib/utils";
 import { NumberField } from "../field";
 import type { SectionProps } from "../types";
@@ -28,6 +28,12 @@ const TYPES: Array<{ value: CustomFieldType; label: string }> = [
   { value: "date", label: "Date" },
   { value: "boolean", label: "Yes / no" },
   { value: "select", label: "Choice list" },
+  { value: "file", label: "File upload" },
+];
+
+const ACCEPTS: Array<{ value: FileFieldAccept; label: string; note: string }> = [
+  { value: "images", label: "Images", note: "JPG, PNG, WebP or HEIC photos, stored as JPEGs at most 2000 px on a side. Phones open the camera." },
+  { value: "documents", label: "Images or PDF", note: "JPG, PNG, WebP or PDF, stored as uploaded. For scans of papers." },
 ];
 
 const BUILT_IN_TYPE_LABELS: Record<BuiltInFieldMeta["type"], string> = {
@@ -76,6 +82,8 @@ function withType(field: CustomField, type: CustomFieldType): CustomField {
       return { ...base, type, min: null, max: null };
     case "select":
       return { ...base, type, options: [{ key: "", label: "", active: true }] };
+    case "file":
+      return { ...base, type, accept: "images" };
     default:
       return { ...base, type };
   }
@@ -415,6 +423,31 @@ function FieldCard({
               {error(bound) && <p className="text-xs text-destructive">{error(bound)}</p>}
             </div>
           ))}
+        </div>
+      )}
+
+      {field.type === "file" && (
+        <div className="max-w-md space-y-1.5">
+          <Label htmlFor={`${id}-accept`}>Accepts</Label>
+          <Select value={field.accept} onValueChange={(accept) => edit((f) => { if (f.type === "file") f.accept = accept as FileFieldAccept; })}>
+            <SelectTrigger id={`${id}-accept`} className="w-full sm:w-48" aria-invalid={!!error("accept")}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ACCEPTS.map((accept) => (
+                <SelectItem key={accept.value} value={accept.value}>
+                  {accept.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {error("accept") ? (
+            <p className="text-xs text-destructive">{error("accept")}</p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              {ACCEPTS.find((accept) => accept.value === field.accept)?.note} One file per record; files count towards the tenant&apos;s storage limit.
+            </p>
+          )}
         </div>
       )}
 

@@ -1,6 +1,6 @@
 import "server-only";
 import { auth } from "@clerk/nextjs/server";
-import { PlatformApiError, type PlatformApi, type PlatformApiErrorCode } from "./types";
+import { PlatformApiError, type PdfFile, type PlatformApi, type PlatformApiErrorCode } from "./types";
 
 function baseUrl() {
   const url = process.env.PLATFORM_API_URL;
@@ -19,14 +19,11 @@ const CODE_FOR_STATUS: Record<number, PlatformApiErrorCode> = {
   503: "unavailable",
 };
 
-/** Calls the backend with the signed-in user's Clerk session token. */
-async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+/** Sends a request to the backend with the signed-in user's Clerk session token. */
+async function send(method: string, path: string, body?: unknown): Promise<Response> {
   const token = await (await auth()).getToken();
-  const url = `${baseUrl()}${path}`;
-
-  let res: Response;
   try {
-    res = await fetch(url, {
+    return await fetch(`${baseUrl()}${path}`, {
       method,
       headers: { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}) },
       body: body === undefined ? undefined : JSON.stringify(body),
@@ -35,13 +32,27 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   } catch (cause) {
     throw new PlatformApiError(`Can't reach the platform API at ${baseUrl()}`, "unavailable", undefined, { cause });
   }
+}
 
-  const data = await res.json().catch(() => null);
-  if (!res.ok) {
-    const error = data?.error;
-    throw new PlatformApiError(error?.message ?? `Platform API returned ${res.status}`, error?.code ?? CODE_FOR_STATUS[res.status] ?? "internal", error?.issues);
-  }
-  return data as T;
+/** The error an unsuccessful response describes. */
+async function errorOf(res: Response) {
+  const error = (await res.json().catch(() => null))?.error;
+  return new PlatformApiError(error?.message ?? `Platform API returned ${res.status}`, error?.code ?? CODE_FOR_STATUS[res.status] ?? "internal", error?.issues);
+}
+
+/** Calls the backend and reads its JSON response. */
+async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const res = await send(method, path, body);
+  if (!res.ok) throw await errorOf(res);
+  return (await res.json().catch(() => null)) as T;
+}
+
+/** Calls the backend for a PDF. */
+async function requestPdf(method: string, path: string, body?: unknown): Promise<PdfFile> {
+  const res = await send(method, path, body);
+  if (!res.ok) throw await errorOf(res);
+  const filename = /filename="([^"]+)"/.exec(res.headers.get("content-disposition") ?? "")?.[1] ?? "document.pdf";
+  return { filename, base64: Buffer.from(await res.arrayBuffer()).toString("base64") };
 }
 
 const tenantPath = (tenantId: string) => `/tenants/${encodeURIComponent(tenantId)}`;
@@ -59,6 +70,7 @@ export const httpPlatformApi: PlatformApi = {
   listConfigVersions: (tenantId) => request("GET", `${tenantPath(tenantId)}/config/versions`),
   getActiveConfig: (tenantId) => request("GET", `${tenantPath(tenantId)}/config`),
   validateConfig: (tenantId, payload) => request("POST", `${tenantPath(tenantId)}/config/validate`, payload),
+  previewReturnReceipt: (payload) => requestPdf("POST", "/documents/return-receipt/preview", payload),
   publishConfig: (tenantId, input) => request("POST", `${tenantPath(tenantId)}/config`, input),
   restoreConfigVersion: (tenantId, version, baseVersion) =>
     request("POST", `${tenantPath(tenantId)}/config/versions/${version}/restore`, { baseVersion }),

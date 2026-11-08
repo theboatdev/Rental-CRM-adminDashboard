@@ -17,6 +17,7 @@ import type { ConfigValidation, PlatformMeta, TenantConfig } from "@/lib/contrac
 import type { ConfigPayload, TenantUsage } from "@/lib/platform-api/types";
 import { PublishDialog } from "./publish-dialog";
 import { BrandingSection } from "./sections/branding-section";
+import { DocumentsSection } from "./sections/documents-section";
 import { FieldsSection } from "./sections/fields-section";
 import { LimitsSection } from "./sections/limits-section";
 import { ListsSection } from "./sections/lists-section";
@@ -39,6 +40,7 @@ const TABS = [
   { value: "lists", label: "Lists" },
   { value: "rules", label: "Rules" },
   { value: "fields", label: "Fields" },
+  { value: "documents", label: "Documents" },
   { value: "limits", label: "Limits" },
   { value: "json", label: "Raw JSON" },
 ] as const;
@@ -328,6 +330,9 @@ export function ConfigEditor({ tenantId, tenantName, tenantSlug, version, active
           </TabsContent>
           <TabsContent value="fields">
             <FieldsSection {...sectionProps} />
+          </TabsContent>
+          <TabsContent value="documents">
+            <DocumentsSection {...sectionProps} />
           </TabsContent>
           <TabsContent value="limits">
             <LimitsSection {...sectionProps} usage={usage} />
