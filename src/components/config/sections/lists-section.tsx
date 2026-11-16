@@ -14,6 +14,7 @@ const LISTS: Array<{ key: ListKey; title: string; description: string }> = [
   { key: "documentTypes", title: "Identity documents", description: "Documents collected from renters, and who must provide them." },
   { key: "paymentMethods", title: "Payment methods", description: "Methods staff can choose when recording a payment." },
   { key: "costCategories", title: "Cost categories", description: "Categories for workshop bills and other operating costs." },
+  { key: "vehicleDocumentTypes", title: "Vehicle compliance documents", description: "Document types vehicles must carry (e.g. insurance, revenue licence). An alert fires on the dashboard before each expires." },
 ];
 
 export function ListsSection(props: SectionProps) {
@@ -40,14 +41,21 @@ function ListEditor({
   issue,
   meta,
 }: SectionProps & { listKey: ListKey; title: string; description: string }) {
-  const items = config.lists[listKey];
-  const publishedKeys = new Set(baseline.lists[listKey].map((item) => item.key));
+  const items = config.lists[listKey] ?? [];
+  const publishedKeys = new Set((baseline.lists[listKey] ?? []).map((item) => item.key));
   const path = `lists.${listKey}`;
+
+  const ensureList = (d: TenantConfig) => {
+    if (listKey === "vehicleDocumentTypes") d.lists.vehicleDocumentTypes ??= [];
+    return d.lists[listKey]!;
+  };
 
   const addRow = () =>
     update((d) => {
+      const list = ensureList(d);
       if (listKey === "documentTypes") d.lists.documentTypes.push({ key: "", label: "", active: true, requiredFor: [] });
-      else d.lists[listKey].push({ key: "", label: "", active: true });
+      else if (listKey === "vehicleDocumentTypes") d.lists.vehicleDocumentTypes!.push({ key: "", label: "", active: true, alertDaysBefore: 7 });
+      else list.push({ key: "", label: "", active: true });
     });
 
   return (
@@ -74,7 +82,7 @@ function ListEditor({
                     aria-invalid={!!keyError}
                     onChange={(e) =>
                       update((d) => {
-                        d.lists[listKey][index]!.key = e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, "_");
+                        ensureList(d)[index]!.key = e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, "_");
                       })
                     }
                   />
@@ -90,7 +98,7 @@ function ListEditor({
                   value={item.label}
                   placeholder="Label"
                   aria-invalid={!!labelError}
-                  onChange={(e) => update((d) => { d.lists[listKey][index]!.label = e.target.value; })}
+                  onChange={(e) => update((d) => { ensureList(d)[index]!.label = e.target.value; })}
                 />
                 {labelError && <p className="mt-1 text-xs text-destructive">{labelError}</p>}
               </div>
@@ -118,17 +126,37 @@ function ListEditor({
                   })}
                 </div>
               )}
+              {listKey === "vehicleDocumentTypes" && "alertDaysBefore" in item && (
+                <div className="flex items-center gap-1.5" title="Days before expiry to show a dashboard alert">
+                  <Input
+                    aria-label={`Alert days before expiry for ${item.label || "item"} ${index + 1}`}
+                    type="number"
+                    min={1}
+                    max={365}
+                    value={item.alertDaysBefore}
+                    className="w-16 text-xs"
+                    onChange={(e) =>
+                      update((d) => {
+                        d.lists.vehicleDocumentTypes ??= [];
+                        const doc = d.lists.vehicleDocumentTypes[index]!;
+                        doc.alertDaysBefore = Math.max(1, parseInt(e.target.value, 10) || 7);
+                      })
+                    }
+                  />
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">days alert</span>
+                </div>
+              )}
               <div className="flex items-center gap-2 pt-1.5">
                 <Switch
                   aria-label={`${item.label || "Item"} active`}
                   checked={item.active}
-                  onCheckedChange={(on) => update((d) => { d.lists[listKey][index]!.active = on; })}
+                  onCheckedChange={(on) => update((d) => { ensureList(d)[index]!.active = on; })}
                 />
                 <Button
                   size="icon-sm"
                   variant="ghost"
                   aria-label="Remove"
-                  onClick={() => update((d) => { d.lists[listKey].splice(index, 1); })}
+                  onClick={() => update((d) => { ensureList(d).splice(index, 1); })}
                 >
                   <Trash2 />
                 </Button>

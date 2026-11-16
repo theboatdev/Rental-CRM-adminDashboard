@@ -16,6 +16,18 @@ export async function requireSuperAdmin(): Promise<{ userId: string }> {
   return { userId };
 }
 
+/**
+ * Same gate as requireSuperAdmin, but returns null instead of redirecting.
+ * Use from Server Actions invoked outside form transitions (e.g. debounced
+ * validate): redirect() there surfaces as "An unexpected response was received
+ * from the server."
+ */
+export async function getSuperAdmin(): Promise<{ userId: string } | null> {
+  const { userId, sessionClaims } = await auth();
+  if (!userId || !isSuperAdmin(sessionClaims)) return null;
+  return { userId };
+}
+
 export async function getPlatformMeta() {
   await requireSuperAdmin();
   return platformApi().getMeta();

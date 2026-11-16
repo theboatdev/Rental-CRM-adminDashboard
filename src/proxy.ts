@@ -9,12 +9,19 @@ const isUnauthorizedRoute = createRouteMatcher(["/unauthorized"]);
  * Optimistic gate: everything except sign-in needs a session, and everything
  * except /unauthorized needs the super_admin platform role. Data access and
  * Server Actions re-check through src/lib/dal.ts.
+ *
+ * Server Action POSTs must not receive an HTML redirect — Next reports that as
+ * "An unexpected response was received from the server." Auth for actions is
+ * enforced again in requireSuperAdmin() / the action body.
  */
 export default clerkMiddleware(async (auth, req) => {
   if (isSignInRoute(req)) return;
 
   const { userId, sessionClaims, redirectToSignIn } = await auth();
   if (!userId) return redirectToSignIn({ returnBackUrl: req.url });
+
+  // next-action: Server Action; leave auth to the action so redirects don't break the protocol.
+  if (req.headers.has("next-action")) return;
 
   if (!isUnauthorizedRoute(req) && !isSuperAdmin(sessionClaims)) {
     return NextResponse.redirect(new URL("/unauthorized", req.url));

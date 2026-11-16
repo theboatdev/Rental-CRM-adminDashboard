@@ -34,6 +34,12 @@ export interface DocumentType extends ListItem {
   requiredFor: ResidentType[];
 }
 
+/** One vehicle compliance document type configured for this tenant (e.g. insurance, revenue licence). */
+export interface VehicleDocumentType extends ListItem {
+  /** Days before expiry to show a document_expiry alert. */
+  alertDaysBefore: number;
+}
+
 export type FieldSection = "vehicles" | "renters" | "rentals" | "payments" | "costs";
 export type CustomFieldType = "text" | "longText" | "number" | "date" | "boolean" | "select" | "file";
 /** What a file field takes: `images` (stored as JPEGs at most 2000 px), or `documents` (images or PDF). */
@@ -106,6 +112,8 @@ export interface TenantConfig {
     documentTypes: DocumentType[];
     paymentMethods: ListItem[];
     costCategories: ListItem[];
+    /** Vehicle compliance document types (insurance, revenue licence, etc.). Absent on older published configs until republished. */
+    vehicleDocumentTypes?: VehicleDocumentType[];
   };
   rules: {
     defaultDepositAmount: number;
