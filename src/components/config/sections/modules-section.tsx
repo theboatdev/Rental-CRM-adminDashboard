@@ -66,16 +66,25 @@ function ModuleSettings({ moduleKey, config, update, issue, meta }: SectionProps
   switch (moduleKey) {
     case "vehicles":
       return wrap(
-        <NumberField
-          id="vehicles-serviceIntervalKm"
-          label="Service interval"
-          suffix="km"
-          min={1}
-          hint="Drives the service-due warning on the dashboard."
-          value={m.vehicles.serviceIntervalKm}
-          onChange={(v) => update((d) => { d.modules.vehicles.serviceIntervalKm = v; })}
-          error={issue("modules.vehicles.serviceIntervalKm")}
-        />,
+        <>
+          <NumberField
+            id="vehicles-serviceIntervalKm"
+            label="Service interval"
+            suffix="km"
+            min={1}
+            hint="Drives the service-due warning on the dashboard."
+            value={m.vehicles.serviceIntervalKm}
+            onChange={(v) => update((d) => { d.modules.vehicles.serviceIntervalKm = v; })}
+            error={issue("modules.vehicles.serviceIntervalKm")}
+          />
+          <SwitchField
+            id="vehicles-thirdPartyVehicles"
+            label="Third-party vehicle tracking"
+            description="Marks vehicles as owned or supplier-sourced, adds a supplier rental cost on those bookings, and breaks profit into gross and net."
+            checked={m.vehicles.thirdPartyVehicles ?? false}
+            onCheckedChange={(v) => update((d) => { d.modules.vehicles.thirdPartyVehicles = v; })}
+          />
+        </>,
       );
     case "rentals":
       return wrap(

@@ -97,7 +97,7 @@ export interface TenantConfig {
   };
   modules: {
     dashboard: Toggle;
-    vehicles: Toggle & { serviceIntervalKm: number };
+    vehicles: Toggle & { serviceIntervalKm: number; thirdPartyVehicles: boolean };
     renters: Toggle;
     rentals: Toggle & {
       inspectionPoints: string[];
