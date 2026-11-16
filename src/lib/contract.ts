@@ -99,7 +99,13 @@ export interface TenantConfig {
     dashboard: Toggle;
     vehicles: Toggle & { serviceIntervalKm: number };
     renters: Toggle;
-    rentals: Toggle & { inspectionPoints: string[]; requirePickupInspection: boolean; requireDropInspection: boolean };
+    rentals: Toggle & {
+      inspectionPoints: string[];
+      requirePickupInspection: boolean;
+      requireDropInspection: boolean;
+      /** specificVehicle = plate required; vehicleClass = make/model hold; both = staff choose. */
+      reservationMode: "specificVehicle" | "vehicleClass" | "both";
+    };
     calendar: Toggle;
     payments: Toggle;
     costs: Toggle & { requireBillUpload: boolean };

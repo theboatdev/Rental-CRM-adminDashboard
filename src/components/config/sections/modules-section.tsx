@@ -1,12 +1,15 @@
 "use client";
 
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import type { ModuleKey } from "@/lib/contract";
+import type { ModuleKey, TenantConfig } from "@/lib/contract";
 import { cn } from "@/lib/utils";
 import { Field, NumberField, SwitchField, TextField } from "../field";
 import { LinesTextarea } from "../lines-textarea";
 import type { SectionProps } from "../types";
+
+type ReservationMode = TenantConfig["modules"]["rentals"]["reservationMode"];
 
 export function ModulesSection(props: SectionProps) {
   const { config, update, issue, meta } = props;
@@ -110,6 +113,26 @@ function ModuleSettings({ moduleKey, config, update, issue, meta }: SectionProps
               checked={m.rentals.requireDropInspection}
               onCheckedChange={(v) => update((d) => { d.modules.rentals.requireDropInspection = v; })}
             />
+            <Field
+              label="Reservation mode"
+              htmlFor="rentals-reservationMode"
+              hint="Specific plate keeps today’s flow. Make &amp; model lets staff hold a class and assign a registration later."
+              error={issue("modules.rentals.reservationMode")}
+            >
+              <Select
+                value={m.rentals.reservationMode ?? "specificVehicle"}
+                onValueChange={(v) => update((d) => { d.modules.rentals.reservationMode = v as ReservationMode; })}
+              >
+                <SelectTrigger id="rentals-reservationMode" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="specificVehicle">Specific vehicle (registration required)</SelectItem>
+                  <SelectItem value="vehicleClass">Make &amp; model (assign plate later)</SelectItem>
+                  <SelectItem value="both">Both (staff choose per booking)</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
           </div>
         </>,
       );
