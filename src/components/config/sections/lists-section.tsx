@@ -4,7 +4,7 @@ import { Lock, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import type { TenantConfig } from "@/lib/contract";
+import type { DocumentType, ListItem, TenantConfig, VehicleDocumentType } from "@/lib/contract";
 import { cn } from "@/lib/utils";
 import type { SectionProps } from "../types";
 
@@ -41,21 +41,63 @@ function ListEditor({
   issue,
   meta,
 }: SectionProps & { listKey: ListKey; title: string; description: string }) {
-  const items = config.lists[listKey] ?? [];
+  const items: ListItem[] = config.lists[listKey] ?? [];
   const publishedKeys = new Set((baseline.lists[listKey] ?? []).map((item) => item.key));
   const path = `lists.${listKey}`;
 
-  const ensureList = (d: TenantConfig) => {
-    if (listKey === "vehicleDocumentTypes") d.lists.vehicleDocumentTypes ??= [];
-    return d.lists[listKey]!;
+  const ensureVehicleDocs = (d: TenantConfig): VehicleDocumentType[] => {
+    d.lists.vehicleDocumentTypes ??= [];
+    return d.lists.vehicleDocumentTypes;
   };
+
+  const setItemField = (index: number, field: "key" | "label" | "active", value: string | boolean) =>
+    update((d) => {
+      if (listKey === "documentTypes") {
+        const item = d.lists.documentTypes[index]!;
+        if (field === "active") item.active = value as boolean;
+        else item[field] = value as string;
+        return;
+      }
+      if (listKey === "vehicleDocumentTypes") {
+        const item = ensureVehicleDocs(d)[index]!;
+        if (field === "active") item.active = value as boolean;
+        else item[field] = value as string;
+        return;
+      }
+      if (listKey === "paymentMethods") {
+        const item = d.lists.paymentMethods[index]!;
+        if (field === "active") item.active = value as boolean;
+        else item[field] = value as string;
+        return;
+      }
+      const item = d.lists.costCategories[index]!;
+      if (field === "active") item.active = value as boolean;
+      else item[field] = value as string;
+    });
 
   const addRow = () =>
     update((d) => {
-      const list = ensureList(d);
-      if (listKey === "documentTypes") d.lists.documentTypes.push({ key: "", label: "", active: true, requiredFor: [] });
-      else if (listKey === "vehicleDocumentTypes") d.lists.vehicleDocumentTypes!.push({ key: "", label: "", active: true, alertDaysBefore: 7 });
-      else list.push({ key: "", label: "", active: true });
+      if (listKey === "documentTypes") {
+        d.lists.documentTypes.push({ key: "", label: "", active: true, requiredFor: [] });
+        return;
+      }
+      if (listKey === "vehicleDocumentTypes") {
+        ensureVehicleDocs(d).push({ key: "", label: "", active: true, alertDaysBefore: 7 });
+        return;
+      }
+      if (listKey === "paymentMethods") {
+        d.lists.paymentMethods.push({ key: "", label: "", active: true });
+        return;
+      }
+      d.lists.costCategories.push({ key: "", label: "", active: true });
+    });
+
+  const removeRow = (index: number) =>
+    update((d) => {
+      if (listKey === "documentTypes") d.lists.documentTypes.splice(index, 1);
+      else if (listKey === "vehicleDocumentTypes") ensureVehicleDocs(d).splice(index, 1);
+      else if (listKey === "paymentMethods") d.lists.paymentMethods.splice(index, 1);
+      else d.lists.costCategories.splice(index, 1);
     });
 
   return (
@@ -70,6 +112,8 @@ function ListEditor({
           const keyError = issue(`${path}[${index}].key`);
           const labelError = issue(`${path}[${index}].label`);
           const published = publishedKeys.has(item.key);
+          const documentItem = listKey === "documentTypes" ? (item as DocumentType) : null;
+          const vehicleDocItem = listKey === "vehicleDocumentTypes" ? (item as VehicleDocumentType) : null;
           return (
             <div key={index} className={cn("flex flex-wrap items-start gap-2 rounded-lg border p-2", !item.active && "bg-muted/40")}>
               <div className="w-full sm:w-52">
@@ -80,11 +124,7 @@ function ListEditor({
                     placeholder="NEW_KEY"
                     className={cn("font-mono text-xs", published && "pr-7")}
                     aria-invalid={!!keyError}
-                    onChange={(e) =>
-                      update((d) => {
-                        ensureList(d)[index]!.key = e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, "_");
-                      })
-                    }
+                    onChange={(e) => setItemField(index, "key", e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, "_"))}
                   />
                   {published && (
                     <Lock className="absolute top-1/2 right-2 size-3.5 -translate-y-1/2 text-muted-foreground" aria-label="In use" />
@@ -98,14 +138,14 @@ function ListEditor({
                   value={item.label}
                   placeholder="Label"
                   aria-invalid={!!labelError}
-                  onChange={(e) => update((d) => { ensureList(d)[index]!.label = e.target.value; })}
+                  onChange={(e) => setItemField(index, "label", e.target.value)}
                 />
                 {labelError && <p className="mt-1 text-xs text-destructive">{labelError}</p>}
               </div>
-              {listKey === "documentTypes" && "requiredFor" in item && (
+              {documentItem && (
                 <div className="flex items-center gap-1" role="group" aria-label="Required for">
                   {meta.residentTypes.map((type) => {
-                    const on = item.requiredFor.includes(type);
+                    const on = documentItem.requiredFor.includes(type);
                     return (
                       <Button
                         key={type}
@@ -126,19 +166,18 @@ function ListEditor({
                   })}
                 </div>
               )}
-              {listKey === "vehicleDocumentTypes" && "alertDaysBefore" in item && (
+              {vehicleDocItem && (
                 <div className="flex items-center gap-1.5" title="Days before expiry to show a dashboard alert">
                   <Input
                     aria-label={`Alert days before expiry for ${item.label || "item"} ${index + 1}`}
                     type="number"
                     min={1}
                     max={365}
-                    value={item.alertDaysBefore}
+                    value={vehicleDocItem.alertDaysBefore}
                     className="w-16 text-xs"
                     onChange={(e) =>
                       update((d) => {
-                        d.lists.vehicleDocumentTypes ??= [];
-                        const doc = d.lists.vehicleDocumentTypes[index]!;
+                        const doc = ensureVehicleDocs(d)[index]!;
                         doc.alertDaysBefore = Math.max(1, parseInt(e.target.value, 10) || 7);
                       })
                     }
@@ -150,14 +189,9 @@ function ListEditor({
                 <Switch
                   aria-label={`${item.label || "Item"} active`}
                   checked={item.active}
-                  onCheckedChange={(on) => update((d) => { ensureList(d)[index]!.active = on; })}
+                  onCheckedChange={(on) => setItemField(index, "active", on)}
                 />
-                <Button
-                  size="icon-sm"
-                  variant="ghost"
-                  aria-label="Remove"
-                  onClick={() => update((d) => { ensureList(d).splice(index, 1); })}
-                >
+                <Button size="icon-sm" variant="ghost" aria-label="Remove" onClick={() => removeRow(index)}>
                   <Trash2 />
                 </Button>
               </div>
