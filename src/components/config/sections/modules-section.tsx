@@ -1,12 +1,15 @@
 "use client";
 
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import type { ModuleKey } from "@/lib/contract";
+import type { ModuleKey, TenantConfig } from "@/lib/contract";
 import { cn } from "@/lib/utils";
 import { Field, NumberField, SwitchField, TextField } from "../field";
 import { LinesTextarea } from "../lines-textarea";
 import type { SectionProps } from "../types";
+
+type ReservationMode = TenantConfig["modules"]["rentals"]["reservationMode"];
 
 export function ModulesSection(props: SectionProps) {
   const { config, update, issue, meta } = props;
@@ -63,16 +66,25 @@ function ModuleSettings({ moduleKey, config, update, issue, meta }: SectionProps
   switch (moduleKey) {
     case "vehicles":
       return wrap(
-        <NumberField
-          id="vehicles-serviceIntervalKm"
-          label="Service interval"
-          suffix="km"
-          min={1}
-          hint="Drives the service-due warning on the dashboard."
-          value={m.vehicles.serviceIntervalKm}
-          onChange={(v) => update((d) => { d.modules.vehicles.serviceIntervalKm = v; })}
-          error={issue("modules.vehicles.serviceIntervalKm")}
-        />,
+        <>
+          <NumberField
+            id="vehicles-serviceIntervalKm"
+            label="Service interval"
+            suffix="km"
+            min={1}
+            hint="Drives the service-due warning on the dashboard."
+            value={m.vehicles.serviceIntervalKm}
+            onChange={(v) => update((d) => { d.modules.vehicles.serviceIntervalKm = v; })}
+            error={issue("modules.vehicles.serviceIntervalKm")}
+          />
+          <SwitchField
+            id="vehicles-thirdPartyVehicles"
+            label="Third-party vehicle tracking"
+            description="Marks vehicles as owned or supplier-sourced, adds a supplier rental cost on those bookings, and breaks profit into gross and net."
+            checked={m.vehicles.thirdPartyVehicles ?? false}
+            onCheckedChange={(v) => update((d) => { d.modules.vehicles.thirdPartyVehicles = v; })}
+          />
+        </>,
       );
     case "rentals":
       return wrap(
@@ -109,6 +121,33 @@ function ModuleSettings({ moduleKey, config, update, issue, meta }: SectionProps
               description="Block closing a rental until return photos are in."
               checked={m.rentals.requireDropInspection}
               onCheckedChange={(v) => update((d) => { d.modules.rentals.requireDropInspection = v; })}
+            />
+            <Field
+              label="Reservation mode"
+              htmlFor="rentals-reservationMode"
+              hint="Specific plate keeps today’s flow. Make &amp; model lets staff hold a class and assign a registration later."
+              error={issue("modules.rentals.reservationMode")}
+            >
+              <Select
+                value={m.rentals.reservationMode ?? "specificVehicle"}
+                onValueChange={(v) => update((d) => { d.modules.rentals.reservationMode = v as ReservationMode; })}
+              >
+                <SelectTrigger id="rentals-reservationMode" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="specificVehicle">Specific vehicle (registration required)</SelectItem>
+                  <SelectItem value="vehicleClass">Make &amp; model (assign plate later)</SelectItem>
+                  <SelectItem value="both">Both (staff choose per booking)</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <SwitchField
+              id="rentals-hideBookingPricingWithoutFinancials"
+              label="Hide booking prices from Staff"
+              description="Staff can still manage bookings and record payments, but won’t see rates, totals, deposits, supplier costs, or amounts owed. Owners and accountants keep full access."
+              checked={m.rentals.hideBookingPricingWithoutFinancials ?? false}
+              onCheckedChange={(v) => update((d) => { d.modules.rentals.hideBookingPricingWithoutFinancials = v; })}
             />
           </div>
         </>,

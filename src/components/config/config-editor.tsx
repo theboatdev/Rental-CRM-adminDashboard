@@ -98,9 +98,20 @@ export interface ConfigEditorProps {
   meta: PlatformMeta;
 }
 
+/** Older published configs may omit lists added later; keep the draft shape complete. */
+function withListDefaults(config: TenantConfig): TenantConfig {
+  return {
+    ...config,
+    lists: {
+      ...config.lists,
+      vehicleDocumentTypes: config.lists.vehicleDocumentTypes ?? [],
+    },
+  };
+}
+
 export function ConfigEditor({ tenantId, tenantName, tenantSlug, version, activeConfig, usage, meta }: ConfigEditorProps) {
   const [tab, setTab] = useState<Tab>("branding");
-  const [draft, setDraft] = useState<TenantConfig>(activeConfig);
+  const [draft, setDraft] = useState<TenantConfig>(() => withListDefaults(activeConfig));
   // While the Raw JSON tab is open its text is the source of truth; null otherwise.
   const [jsonText, setJsonText] = useState<string | null>(null);
   const [plainText, setPlainText] = useState(false);
@@ -110,10 +121,11 @@ export function ConfigEditor({ tenantId, tenantName, tenantSlug, version, active
 
   const key = jsonText ?? JSON.stringify(draft);
   const payload = useMemo<ConfigPayload>(() => (jsonText === null ? { config: draft } : { configText: jsonText }), [draft, jsonText]);
+  const baselineConfig = useMemo(() => withListDefaults(activeConfig), [activeConfig]);
   const { result, pending, error, prime } = useServerValidation(tenantId, key, payload, {
     valid: true,
     issues: [],
-    config: activeConfig,
+    config: baselineConfig,
     changes: [],
     removedListKeys: [],
     customFieldChanges: [],
@@ -185,8 +197,8 @@ export function ConfigEditor({ tenantId, tenantName, tenantSlug, version, active
   };
 
   const discard = () => {
-    setDraft(activeConfig);
-    setJsonText(tab === "json" ? JSON.stringify(activeConfig, null, 2) : null);
+    setDraft(baselineConfig);
+    setJsonText(tab === "json" ? JSON.stringify(baselineConfig, null, 2) : null);
   };
 
   const exportFile = () => {
@@ -219,7 +231,7 @@ export function ConfigEditor({ tenantId, tenantName, tenantSlug, version, active
       toast.success(`Published v${res.data.version}`);
     });
 
-  const sectionProps: SectionProps = { tenantId, config: draft, baseline: activeConfig, update, issue: issueAt, issueCount, meta };
+  const sectionProps: SectionProps = { tenantId, config: draft, baseline: baselineConfig, update, issue: issueAt, issueCount, meta };
   const canPublish = !pending && !error && result.valid && changes.length > 0;
 
   return (

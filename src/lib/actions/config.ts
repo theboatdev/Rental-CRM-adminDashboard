@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import type { ConfigValidation } from "@/lib/contract";
-import { requireSuperAdmin } from "@/lib/dal";
+import { getSuperAdmin, requireSuperAdmin } from "@/lib/dal";
 import { platformApi, type ConfigPayload, type PdfFile, type UploadSignature } from "@/lib/platform-api";
 import { toActionError, type ActionResult } from "./result";
 
@@ -31,7 +31,8 @@ export async function validateConfigAction(input: {
   tenantId: string;
   payload: ConfigPayload;
 }): Promise<ActionResult<ConfigValidation>> {
-  await requireSuperAdmin();
+  // No redirect(): this action is called from a debounced effect; redirects break the action protocol.
+  if (!(await getSuperAdmin())) return { ok: false, error: "Super admin access required. Sign in again." };
   try {
     return { ok: true, data: await platformApi().validateConfig(input.tenantId, input.payload) };
   } catch (error) {
