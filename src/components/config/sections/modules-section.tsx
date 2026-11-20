@@ -142,6 +142,13 @@ function ModuleSettings({ moduleKey, config, update, issue, meta }: SectionProps
                 </SelectContent>
               </Select>
             </Field>
+            <SwitchField
+              id="rentals-hideBookingPricingWithoutFinancials"
+              label="Hide booking prices from Staff"
+              description="Staff can still manage bookings and record payments, but won’t see rates, totals, deposits, supplier costs, or amounts owed. Owners and accountants keep full access."
+              checked={m.rentals.hideBookingPricingWithoutFinancials ?? false}
+              onCheckedChange={(v) => update((d) => { d.modules.rentals.hideBookingPricingWithoutFinancials = v; })}
+            />
           </div>
         </>,
       );

@@ -105,6 +105,8 @@ export interface TenantConfig {
       requireDropInspection: boolean;
       /** specificVehicle = plate required; vehicleClass = make/model hold; both = staff choose. */
       reservationMode: "specificVehicle" | "vehicleClass" | "both";
+      /** When on, roles without financials:view don't see booking/vehicle rates, totals or deposits. */
+      hideBookingPricingWithoutFinancials: boolean;
     };
     calendar: Toggle;
     payments: Toggle;
