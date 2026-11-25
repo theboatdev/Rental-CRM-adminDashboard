@@ -21,7 +21,15 @@ export function ModulesSection(props: SectionProps) {
       // Keep the config valid: an enabled tab module must be reachable from navigation.
       const mod = meta.modules.find((m) => m.key === key);
       if (enabled && mod?.tab && !d.navigation.some((item) => item.module === key)) {
-        d.navigation.push({ module: key, label: mod.label });
+        const item = { module: key, label: mod.label };
+        // Suppliers sits between Rentals and Calendar when both are present.
+        if (key === "suppliers") {
+          const afterRentals = d.navigation.findIndex((n) => n.module === "rentals");
+          if (afterRentals >= 0) d.navigation.splice(afterRentals + 1, 0, item);
+          else d.navigation.push(item);
+        } else {
+          d.navigation.push(item);
+        }
       }
     });
 

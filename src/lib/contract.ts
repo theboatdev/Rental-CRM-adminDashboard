@@ -13,6 +13,7 @@ export type ModuleKey =
   | "calendar"
   | "payments"
   | "costs"
+  | "suppliers"
   | "fuelLogs"
   | "whatsappDigest"
   | "guestPortal";
@@ -111,6 +112,7 @@ export interface TenantConfig {
     calendar: Toggle;
     payments: Toggle;
     costs: Toggle & { requireBillUpload: boolean };
+    suppliers: Toggle;
     fuelLogs: Toggle;
     whatsappDigest: Toggle & { cron: string; recipients: string[] };
     guestPortal: Toggle & { residentTypes: ResidentType[]; requireDocumentUpload: boolean };
@@ -127,7 +129,7 @@ export interface TenantConfig {
     defaultDepositAmount: number;
     minRentalDays: number;
     touristPermitDocumentKeys: string[];
-    codePrefixes: { rental: string; booking: string; receipt: string; advance: string; renter: string };
+    codePrefixes: { rental: string; booking: string; receipt: string; advance: string; renter: string; supplier: string };
   };
   fields: Record<FieldSection, { builtIn: Record<string, BuiltInFieldSettings>; custom: CustomField[] }>;
   /** The PDFs the tenant app issues. */

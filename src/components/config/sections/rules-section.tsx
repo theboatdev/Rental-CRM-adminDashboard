@@ -10,6 +10,7 @@ const PREFIXES = [
   { key: "receipt", label: "Payment receipts", sample: "2026-0091" },
   { key: "advance", label: "Booking advances", sample: "2026-0043" },
   { key: "renter", label: "Renter profiles", sample: "0146" },
+  { key: "supplier", label: "Supplier profiles", sample: "0004" },
 ] as const;
 
 export function RulesSection({ config, update, issue }: SectionProps) {
@@ -87,7 +88,7 @@ export function RulesSection({ config, update, issue }: SectionProps) {
               label={label}
               mono
               hint={`${r.codePrefixes[key] || "XX"}-${sample}`}
-              value={r.codePrefixes[key]}
+              value={r.codePrefixes[key] ?? ""}
               onChange={(v) => update((d) => { d.rules.codePrefixes[key] = v.toUpperCase(); })}
               error={issue(`rules.codePrefixes.${key}`)}
             />
