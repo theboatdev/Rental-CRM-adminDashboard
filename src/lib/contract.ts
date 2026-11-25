@@ -97,7 +97,7 @@ export interface TenantConfig {
   };
   modules: {
     dashboard: Toggle;
-    vehicles: Toggle & { serviceIntervalKm: number; thirdPartyVehicles: boolean };
+    vehicles: Toggle & { serviceIntervalKm: number; thirdPartyVehicles: boolean; rateOnVehicle: boolean };
     renters: Toggle;
     rentals: Toggle & {
       inspectionPoints: string[];
@@ -162,6 +162,9 @@ export interface BuiltInFieldMeta {
   required?: boolean;
   showInList?: boolean;
   secondaryCurrencyOnly?: boolean;
+  thirdPartyVehiclesOnly?: boolean;
+  /** Only used when modules.vehicles.rateOnVehicle is on. */
+  rateOnVehicleOnly?: boolean;
   /** What happens when the field is off. */
   note?: string;
 }

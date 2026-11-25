@@ -84,6 +84,13 @@ function ModuleSettings({ moduleKey, config, update, issue, meta }: SectionProps
             checked={m.vehicles.thirdPartyVehicles ?? false}
             onCheckedChange={(v) => update((d) => { d.modules.vehicles.thirdPartyVehicles = v; })}
           />
+          <SwitchField
+            id="vehicles-rateOnVehicle"
+            label="Require daily rate on vehicle"
+            description="Off: staff enter the rate when making a booking instead of storing it on the vehicle."
+            checked={m.vehicles.rateOnVehicle ?? true}
+            onCheckedChange={(v) => update((d) => { d.modules.vehicles.rateOnVehicle = v; })}
+          />
         </>,
       );
     case "rentals":

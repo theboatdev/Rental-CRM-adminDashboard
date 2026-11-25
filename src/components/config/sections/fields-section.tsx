@@ -155,6 +155,7 @@ function BuiltInFieldList({ section, config, meta, update, issue }: SectionProps
           field={field}
           settings={config.fields[section].builtIn[field.key]!}
           secondaryCurrency={config.locale.secondaryCurrency}
+          rateOnVehicle={config.modules.vehicles.rateOnVehicle ?? true}
           update={update}
           issue={issue}
         />
@@ -168,6 +169,7 @@ function BuiltInFieldRow({
   field,
   settings,
   secondaryCurrency,
+  rateOnVehicle,
   update,
   issue,
 }: {
@@ -175,6 +177,7 @@ function BuiltInFieldRow({
   field: BuiltInFieldMeta;
   settings: TenantConfig["fields"][FieldSection]["builtIn"][string];
   secondaryCurrency: string | null;
+  rateOnVehicle: boolean;
   update: SectionProps["update"];
   issue: SectionProps["issue"];
 }) {
@@ -183,7 +186,12 @@ function BuiltInFieldRow({
   const edit = (mutate: (s: typeof settings) => void) => update((d) => mutate(d.fields[section].builtIn[field.key]!));
   const error = (key: string) => issue(`${path}.${key}`);
   const errors = ["active", "required", "showInList"].map(error).filter(Boolean);
-  const unused = field.secondaryCurrencyOnly && !secondaryCurrency;
+  const unused =
+    (field.secondaryCurrencyOnly && !secondaryCurrency) || (field.rateOnVehicleOnly && !rateOnVehicle);
+  const unusedNote =
+    field.rateOnVehicleOnly && !rateOnVehicle
+      ? "Not used: rates are entered on each booking (modules.vehicles.rateOnVehicle is off)."
+      : "Not used: the tenant has no second currency.";
 
   return (
     <div className={cn("grid gap-3 rounded-lg border p-3 lg:grid-cols-[1fr_1fr_auto]", !settings.active && "bg-muted/40")}>
@@ -221,7 +229,7 @@ function BuiltInFieldRow({
         />
         {error("helpText") && <p className="mt-1 text-xs text-destructive">{error("helpText")}</p>}
         {(field.note || unused) && (
-          <p className="mt-1 text-xs text-muted-foreground">{unused ? "Not used: the tenant has no second currency." : field.note}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{unused ? unusedNote : field.note}</p>
         )}
       </div>
       <div className="flex flex-wrap items-start gap-x-5 gap-y-2 pt-2">
